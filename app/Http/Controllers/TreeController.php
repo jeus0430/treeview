@@ -18,10 +18,8 @@ class TreeController extends Controller
         if ($request->ajax()) {
             $this->getChartJSON();
         } else {
-            // $start_date     = $request->input('startDate', Carbon::today()->subMonth()->toDateString());
-            // $end_date   = $request->input('endDate', Carbon::today()->toDateString());
-            $start_date     = '2020-12-01';
-            $end_date   = '2020-12-31';
+            $start_date     = $request->input('startDate', '2020-12-01');
+            $end_date   = $request->input('endDate', '2020-12-31');
 
             // Get parent mones with raw sql query from view table
             // $sql = "
@@ -61,7 +59,7 @@ class TreeController extends Controller
                     $mones = $mones[0];
                     // Then append relavent info field to each nodes by traversing each nodes recursively
                     $this->getTree($mones);
-    
+
                     // Finally convert tree model into string with json and base64 hash algorithm.
                     $mones = base64_encode(json_encode($mones));
                     return view('treebox', compact('mones', 'mone_av', 'start_date', 'end_date'));
@@ -98,7 +96,13 @@ class TreeController extends Controller
         $day_step = $request->input('day_step');
         if ($day_step == 'daily') {
             $sql = "SELECT DATE(day_date) AS date, real_qty, qty, delta FROM view_yomi WHERE mone = '{$mone}' AND day_date > '{$start_date}' AND day_date < '{$end_date}' ORDER BY day_date";
+            $sql1 = "SELECT qty, reading_date FROM kriot_ratsif WHERE reading_date > '{$start_date}' AND reading_date < '{$end_date}' AND mone= {$mone} ORDER BY reading_date ASC ";
             $result = DB::select($sql);
+            $result1 = DB::select($sql1);
+            $result = array (
+                'org' => $result,
+                'new' => $result1
+            );
         } else if ($day_step == 'hourly') {
             $sql = "
                 SELECT REPLACE(day_date, '00:00:00','00:00:00') AS date, h00 AS qty FROM transmissions

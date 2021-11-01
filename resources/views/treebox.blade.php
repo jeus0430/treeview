@@ -112,6 +112,7 @@
                         <div id="chart_1"></div>
                         <div id="chart_2"></div>
                         <div id="chart_3"></div>
+                        <div id="chart_4"></div>
                     </div>
                 </div>
             </div>
@@ -128,7 +129,8 @@
                 const primary = '#6993FF';
                 const success = '#1BC5BD';
                 const danger = '#F64E60';
-                var chart_1, chart_2, chart_3 ;
+                const info = '#C6EE60';
+                var chart_1, chart_2, chart_3, chart_4 ;
                 @isset($mones)
                     var data = JSON.parse(atob('<?= $mones ?>'));
                     treeBoxes('',data);
@@ -140,6 +142,19 @@
                         var newDate = new Date( myDate[0], myDate[1] - 1, myDate[2]);
                         series.push([newDate.getTime(), element[name]]);
                     });
+                    return series;
+                }
+                function generateQtys(arr) {
+                    var series = [];
+                    arr.forEach(function(element) {
+                        tmp = element['reading_date'].split(" ")
+                        myDate = tmp[0].split("-")
+                        myMins = tmp[1].split(":")
+                        var newDate = new Date( myDate[0], myDate[1] - 1, myDate[2], myMins[0], myMins[1], myMins[2])
+                        console.log('newDate', newDate)
+                        series.push([newDate.getTime(), element['qty']]);
+                    });
+                    console.log(series)
                     return series;
                 }
                 function openChart(ev, mone, address)
@@ -172,8 +187,9 @@
                                 if (chart_1) chart_1.destroy();
                                 if (chart_2) chart_2.destroy();
                                 if (chart_3) chart_3.destroy();
+                                if (chart_4) chart_4.destroy();
                                 $("#chart_1").text('');
-                                if (result.length) {
+                                if (result.org.length) {
                                     if ($('input[name="day_step"]:checked').val() == 'daily') {
                                         if ($("#together:checked").val()) {
                                             var options = {
@@ -222,7 +238,7 @@
                                             var options_1 = {
                                                 series: [{
                                                     name: 'qty',
-                                                    data: generateDayWiseTimeSeries(result, 'qty')
+                                                    data: generateDayWiseTimeSeries(result.org, 'qty')
                                                 }],
                                                 chart: {
                                                     id: 'fb',
@@ -258,7 +274,7 @@
                                             var options_2 = {
                                                 series: [{
                                                     name: 'real_qty',
-                                                    data: generateDayWiseTimeSeries(result, 'real_qty')
+                                                    data: generateDayWiseTimeSeries(result.org, 'real_qty')
                                                 }],
                                                 chart: {
                                                     id: 'fb',
@@ -297,7 +313,7 @@
                                             var options_3 = {
                                                 series: [{
                                                     name: 'delta',
-                                                    data: generateDayWiseTimeSeries(result, 'delta')
+                                                    data: generateDayWiseTimeSeries(result.org, 'delta')
                                                 }],
                                                 stroke: {
                                                     width: 1
@@ -333,12 +349,53 @@
                                                     }
                                                 },
                                             };
+                                            var options_4 = {
+                                                series: [{
+                                                    name: 'qty from kirot',
+                                                    data: generateQtys(result.new)
+                                                }],
+                                                stroke: {
+                                                    width: 1
+                                                },
+                                                title: {
+                                                    text: 'qty from kirot'
+                                                },
+                                                chart: {
+                                                    id: 'fb',
+                                                    toolbar: {
+                                                        show: false
+                                                    },
+                                                    group: 'social',
+                                                    type: $('input[name="chart_type"]:checked').val(),
+                                                    height: 200
+                                                },
+                                                colors: ['info'],
+                                                yaxis: {
+                                                    labels: {
+                                                    minWidth: 40
+                                                    }
+                                                },
+                                                xaxis: {
+                                                    type: 'datetime',
+                                                    labels: {
+                                                        format: 'yyyy-MM-dd H',
+                                                        datetimeFormatter: {
+                                                            year: 'yyyy',
+                                                            month: 'MMM \'yy',
+                                                            day: 'dd MMM',
+                                                            hour: 'HH:mm'
+                                                        }
+                                                    }
+                                                },
+                                            };
                                             chart_1 = new ApexCharts(document.querySelector("#chart_1"), options_1);
                                             chart_1.render();
                                             chart_2 = new ApexCharts(document.querySelector("#chart_2"), options_2);
                                             chart_2.render();
                                             chart_3 = new ApexCharts(document.querySelector("#chart_3"), options_3);
                                             chart_3.render();
+                                            chart_4 = new ApexCharts(document.querySelector("#chart_4"), options_4);
+                                            chart_4.render();
                                         }
                                     } else {
                                         var options = {
