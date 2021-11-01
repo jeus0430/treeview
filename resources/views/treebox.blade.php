@@ -369,7 +369,7 @@
                                                     type: $('input[name="chart_type"]:checked').val(),
                                                     height: 200
                                                 },
-                                                colors: ['info'],
+                                                colors: [info],
                                                 yaxis: {
                                                     labels: {
                                                     minWidth: 40
