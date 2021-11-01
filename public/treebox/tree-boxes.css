@@ -81,8 +81,12 @@
 }
 
 .node-text {
-	font: 9px sans-serif;
+	font: 10px sans-serif;
 	color: white;
+}
+.node-text:hover {
+	font: 15px sans-serif;
+	/* color: yellow; */
 }
 
 .tooltip-text-container {
@@ -120,3 +124,12 @@ a.exchangeName {
 	color: orange;
 }
 
+.rectover{
+	stroke-width: 2px;
+	stroke: orange;
+}
+
+.rectout{
+	stroke-width: 2px;
+	stroke: rgb(0,0,0);
+}

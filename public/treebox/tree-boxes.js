@@ -45,7 +45,7 @@ function treeBoxes(urlService, jsonData)
 		width = window.innerWidth - margin.right - margin.left,
 		height = window.innerHeight - margin.top - margin.bottom;
     $("#tree-container").height(window.innerHeight - 80);
-	var rectNode = { width : 200, height : 50, textMargin : 5 },
+	var rectNode = { width : 300, height : 70, textMargin : 5 },
 		tooltip = { width : 150, height : 40, textMargin : 5 };
 	var i = 0,
 		duration = 750,
@@ -193,22 +193,21 @@ function treeBoxes(urlService, jsonData)
 		.attr('class', 'node-rect')
 		.attr('fill', function (d) {var color; if (d._children && d._children.length) color =  '#5cb85c'; else color = '#337ab7'; return color;})
 		.attr('filter', 'url(#drop-shadow)');
-
 		var no = nodeEnter.append('foreignObject')
 		.attr('x', rectNode.textMargin)
 		.attr('y', rectNode.textMargin)
 		.attr('width', function() {
-					return (rectNode.width - rectNode.textMargin * 2) < 0 ? 0
-							: (rectNode.width - rectNode.textMargin * 2)
+					return (rectNode.width*1.3 - rectNode.textMargin * 2) < 0 ? 0
+							: (rectNode.width*1.3 - rectNode.textMargin * 2)
 				})
 		.attr('height', function() {
-					return (rectNode.height - rectNode.textMargin * 2) < 0 ? 0
-							: (rectNode.height - rectNode.textMargin * 2)
+					return (rectNode.height*1.3 - rectNode.textMargin * 2) < 0 ? 0
+							: (rectNode.height*1.3 - rectNode.textMargin * 2)
 				})
 		.append('xhtml').html(function(d) {
 					return '<div style="width: '
-                            + (rectNode.width - rectNode.textMargin * 2) + 'px; height: '
-                            + (rectNode.height - rectNode.textMargin * 2) + 'px;" class="node-text wordwrap"'
+                            + (rectNode.width*1.3 - rectNode.textMargin * 2) + 'px; height: '
+                            + (rectNode.height*1.3 - rectNode.textMargin * 2) + 'px;" class="node-text wordwrap"'
                             + 'onmousedown="beforeChart(event)"'
                             + 'onmouseup="openChart(event,\'' + d.mone + '\',\'' + d.address + '\')" data-mone="' + d.mone + '">'
 							+ '<b>Mone:</b>' + d.mone + '&nbsp;&nbsp;'
@@ -217,6 +216,7 @@ function treeBoxes(urlService, jsonData)
 							+ '<b>real_qty: </b>' + d.real_qty  + '<br>'
 							+ '<b>delta: </b>' + d.delta + '&nbsp;&nbsp;'
 							+ '<b>per_cent: </b>' + d.per_cent + '<br>'
+							+ '<b>dif_sons: </b>' + d.dif_sons + '&nbsp;&nbsp;'
 							+ '</div>';
 				})
 		.on('mouseover', function(d) {
@@ -330,7 +330,6 @@ function treeBoxes(urlService, jsonData)
 				d3.select(this).attr('marker-end', 'url(#end-arrow-selected)');
 				d3.select(this).attr('marker-start', linkMarkerStart('ASYN', true));
 				d3.select(this).attr('class', 'linkselected');
-
 				// $('#tooltipLinkID' + d.target.id).attr('x', (d.target.y + rectNode.width - d.source.y) / 2 + d.source.y);
 				// $('#tooltipLinkID' + d.target.id).attr('y', (d.target.x - d.source.x) / 2 + d.source.x);
 				// $('#tooltipLinkID' + d.target.id).css('visibility', 'visible');
