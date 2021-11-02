@@ -433,7 +433,7 @@ function treeBoxes(urlService, jsonData)
 	// Toggle children on click.
 	function click(d) {
 		if (d.children) {
-            d._children = d.children;
+					d._children = d.children;
 			d.children = null;
 		} else {
 			d.children = d._children;

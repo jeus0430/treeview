@@ -40,27 +40,28 @@ class TreeController extends Controller
                     `monim`.`mone`                AS `mone`,
                     `monim`.`neches`              AS `neches`,
                     `customers`.`address`            AS `address`,
-                    `kriot_yomi`.`dif_sons`               AS `dif_sons`
+                    `kriot_yomi`.`dif_sons`               AS `dif_sons`,
+                    `monim`.`sivug` AS `sivug`
                     FROM  `monim`
                     LEFT JOIN `kriot_yomi` ON `monim`.`mone` = `kriot_yomi`.`mone`
                     LEFT JOIN `customers` ON `monim`.`neches` = `customers`.`neches`
-                    GROUP BY `monim`.`mone`, `monim`.`neches`, `customers`.`address`,`kriot_yomi`.`dif_sons`
+                    GROUP BY `monim`.`mone`, `monim`.`neches`, `customers`.`address`,`kriot_yomi`.`dif_sons`, `monim`.`sivug`
                 ";
                 $mone_arr       = DB::select($sql);
                 $this->mone_arr = array_combine(array_column($mone_arr, 'mone'), $mone_arr);
+
                 // First get recursive tree model of mone nodes
                 $mone_av = $request->input('mone_av');
-                $mone_av = 191535515;
                 if ($mone_av)
                     $mones = Mones::where('mone', $mone_av);
                 else
                     $mones = Mones::whereNull('mone_av');
                 $mones = $mones->with('_children')->get();
                 if(isset($mones[0])){
-                    $mones = $mones[0];
+                    $mones = $mones[0]->toArray();
+
                     // Then append relavent info field to each nodes by traversing each nodes recursively
                     $this->getTree($mones);
-
                     // Finally convert tree model into string with json and base64 hash algorithm.
                     $mones = base64_encode(json_encode($mones));
                     return view('treebox', compact('mones', 'mone_av', 'start_date', 'end_date'));
@@ -78,24 +79,26 @@ class TreeController extends Controller
     public function getTree(&$mone)
     {
         $result = $this->mone_arr[$mone['mone']];
-        $mone->qty        = $result->qty;
-        $mone->address    = $result->address;
-        $mone->real_qty   = $result->real_qty;
-        $mone->per_cent   = $result->per_cent;
-        $mone->delta   = $result->delta;
-        $mone->dif_sons   = $result->dif_sons;
-        if ($mone->sivug) {
+        $mone['qty']        = $result->qty;
+        $mone['address']    = $result->address;
+        $mone['real_qty']   = $result->real_qty;
+        $mone['per_cent']   = $result->per_cent;
+        $mone['delta']   = $result->delta;
+        $mone['dif_sons']   = $result->dif_sons;
+        $mone['sivug']   = $result->sivug;
+
+        if ((int)$mone['sivug']) {
             $v_children = [];
-            foreach($mone->_children as $each)
-                if ($each->_children->isNotEmpty()) {
-                    foreach($each->_children as $each_c)
+            foreach($mone['_children'] as $each)
+                if (count($each['_children'])) {
+                    foreach($each['_children'] as $each_c)
                     array_push($v_children, $each_c);
                 }
-            $mone['_children'] = $v_children;
+                $mone['_children'] = $v_children;
         }
 
-        if ($mone->_children->isNotEmpty())
-            foreach($mone->_children as $each)
+        if (count($mone['_children']))
+            foreach($mone['_children'] as $each)
                 $this->getTree($each);
     }
 
