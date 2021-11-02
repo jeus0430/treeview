@@ -70,6 +70,12 @@
                                 </div>
                             </div>
                             <div>
+                                <div class="form-group form-check">
+                                    <input type="checkbox" class="form-check-input" id="sivug">
+                                    <label class="form-check-label" for="sivug">Sivug</label>
+                                </div>
+                            </div>
+                            <div>
                                 <div class="row">
                                     <div class="col-md-6">
                                         <div class="form-group row">

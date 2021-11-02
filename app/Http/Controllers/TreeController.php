@@ -13,6 +13,7 @@ class TreeController extends Controller
 {
     public function index(Request $request)
     {
+        // $request->mone
         set_time_limit(0);
 
         if ($request->ajax()) {
@@ -20,36 +21,36 @@ class TreeController extends Controller
         } else {
             $start_date     = $request->input('startDate', '2020-12-01');
             $end_date   = $request->input('endDate', '2020-12-31');
-
-            // Get parent mones with raw sql query from view table
-            // $sql = "
-            //     SELECT c.mone, b.address FROM
-            //     (SELECT mone_av FROM monim WHERE mone_av IS NOT NULL GROUP BY mone_av) AS a
-            //     LEFT JOIN monim c ON c.mone = a.mone_av
-            //     LEFT JOIN customers b ON b.neches = c.neches";
-            // $parents = DB::select($sql);
-
-            // Get total mone array with relavant info fields with raw sql query from moim table
-            $sql = "
-                SELECT
-                AVG(`kriot_yomi`.`qty`)            AS `qty`,
-                AVG(`kriot_yomi`.`real_qty`)       AS `real_qty`,
-                AVG(`kriot_yomi`.`delta`)          AS `delta`,
-                AVG(`kriot_yomi`.`per_cent`)       AS `per_cent`,
-                `monim`.`mone`                AS `mone`,
-                `monim`.`neches`              AS `neches`,
-                `customers`.`address`            AS `address`,
-                `kriot_yomi`.`dif_sons`               AS `dif_sons`
-                FROM  `monim`
-                LEFT JOIN `kriot_yomi` ON `monim`.`mone` = `kriot_yomi`.`mone`
-                LEFT JOIN `customers` ON `monim`.`neches` = `customers`.`neches`
-                GROUP BY `monim`.`mone`, `monim`.`neches`, `customers`.`address`,`kriot_yomi`.`dif_sons`
-            ";
-            $mone_arr       = DB::select($sql);
-            $this->mone_arr = array_combine(array_column($mone_arr, 'mone'), $mone_arr);
             if ($request->has('mone_av')) {
+                // Get parent mones with raw sql query from view table
+                // $sql = "
+                //     SELECT c.mone, b.address FROM
+                //     (SELECT mone_av FROM monim WHERE mone_av IS NOT NULL GROUP BY mone_av) AS a
+                //     LEFT JOIN monim c ON c.mone = a.mone_av
+                //     LEFT JOIN customers b ON b.neches = c.neches";
+                // $parents = DB::select($sql);
+
+                // Get total mone array with relavant info fields with raw sql query from moim table
+                $sql = "
+                    SELECT
+                    AVG(`kriot_yomi`.`qty`)            AS `qty`,
+                    AVG(`kriot_yomi`.`real_qty`)       AS `real_qty`,
+                    AVG(`kriot_yomi`.`delta`)          AS `delta`,
+                    AVG(`kriot_yomi`.`per_cent`)       AS `per_cent`,
+                    `monim`.`mone`                AS `mone`,
+                    `monim`.`neches`              AS `neches`,
+                    `customers`.`address`            AS `address`,
+                    `kriot_yomi`.`dif_sons`               AS `dif_sons`
+                    FROM  `monim`
+                    LEFT JOIN `kriot_yomi` ON `monim`.`mone` = `kriot_yomi`.`mone`
+                    LEFT JOIN `customers` ON `monim`.`neches` = `customers`.`neches`
+                    GROUP BY `monim`.`mone`, `monim`.`neches`, `customers`.`address`,`kriot_yomi`.`dif_sons`
+                ";
+                $mone_arr       = DB::select($sql);
+                $this->mone_arr = array_combine(array_column($mone_arr, 'mone'), $mone_arr);
                 // First get recursive tree model of mone nodes
                 $mone_av = $request->input('mone_av');
+                $mone_av = 191535515;
                 if ($mone_av)
                     $mones = Mones::where('mone', $mone_av);
                 else
@@ -83,6 +84,16 @@ class TreeController extends Controller
         $mone->per_cent   = $result->per_cent;
         $mone->delta   = $result->delta;
         $mone->dif_sons   = $result->dif_sons;
+        if ($mone->sivug) {
+            $v_children = [];
+            foreach($mone->_children as $each)
+                if ($each->_children->isNotEmpty()) {
+                    foreach($each->_children as $each_c)
+                    array_push($v_children, $each_c);
+                }
+            $mone['_children'] = $v_children;
+        }
+
         if ($mone->_children->isNotEmpty())
             foreach($mone->_children as $each)
                 $this->getTree($each);

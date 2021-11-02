@@ -43,13 +43,21 @@ class Mones extends Model
 
     public function _children()
     {
-        return $this->oneChildren()->with('_children');
+        if ($this->sivug)
+            return $this->grandChildren();
+        else
+            return $this->oneChildren()->with('_children');
     }
 
     public function kriot()
     {
         return $this->hasMany(kriotYomi::class, 'mone', 'mone');
         // return $this->hasOne(kriotYomi::class, 'mone', 'mone')->ofMany('day_date', 'max');
+    }
+
+    public function grandChildren()
+    {
+        return $this->children()->with('grandChildren');
     }
 
     public function hisCustomer()
