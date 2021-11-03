@@ -81,11 +81,11 @@
 }
 
 .node-text {
-	font: 10px sans-serif;
+	font: 14px sans-serif;
 	color: white;
 }
 .node-text:hover {
-	font: 15px sans-serif;
+	font: 16px sans-serif;
 	/* color: yellow; */
 }
 

@@ -19,6 +19,7 @@ class TreeController extends Controller
         if ($request->ajax()) {
             $this->getChartJSON();
         } else {
+            $sivug = $request->input('sivug', false);
             $start_date     = $request->input('startDate', '2020-12-01');
             $end_date   = $request->input('endDate', '2020-12-31');
             if ($request->has('mone_av')) {
@@ -39,9 +40,9 @@ class TreeController extends Controller
                     AVG(`kriot_yomi`.`per_cent`)       AS `per_cent`,
                     `monim`.`mone`                AS `mone`,
                     `monim`.`neches`              AS `neches`,
+                    `monim`.`sivug` AS `sivug`,
                     `customers`.`address`            AS `address`,
-                    `kriot_yomi`.`dif_sons`               AS `dif_sons`,
-                    `monim`.`sivug` AS `sivug`
+                    `kriot_yomi`.`dif_sons`               AS `dif_sons`
                     FROM  `monim`
                     LEFT JOIN `kriot_yomi` ON `monim`.`mone` = `kriot_yomi`.`mone`
                     LEFT JOIN `customers` ON `monim`.`neches` = `customers`.`neches`
@@ -49,7 +50,6 @@ class TreeController extends Controller
                 ";
                 $mone_arr       = DB::select($sql);
                 $this->mone_arr = array_combine(array_column($mone_arr, 'mone'), $mone_arr);
-
                 // First get recursive tree model of mone nodes
                 $mone_av = $request->input('mone_av');
                 if ($mone_av)
@@ -59,9 +59,9 @@ class TreeController extends Controller
                 $mones = $mones->with('_children')->get();
                 if(isset($mones[0])){
                     $mones = $mones[0]->toArray();
-
                     // Then append relavent info field to each nodes by traversing each nodes recursively
-                    $this->getTree($mones);
+                    $this->bindProps($mones);
+                    $this->getTree($mones, $sivug);
                     // Finally convert tree model into string with json and base64 hash algorithm.
                     $mones = base64_encode(json_encode($mones));
                     return view('treebox', compact('mones', 'mone_av', 'start_date', 'end_date'));
@@ -76,30 +76,40 @@ class TreeController extends Controller
         }
     }
 
-    public function getTree(&$mone)
-    {
+    public function bindProps(&$mone) {
         $result = $this->mone_arr[$mone['mone']];
         $mone['qty']        = $result->qty;
         $mone['address']    = $result->address;
         $mone['real_qty']   = $result->real_qty;
         $mone['per_cent']   = $result->per_cent;
-        $mone['delta']   = $result->delta;
+        $mone['delta']      = $result->delta;
         $mone['dif_sons']   = $result->dif_sons;
-        $mone['sivug']   = $result->sivug;
+        $mone['sivug']      = (int)$result->sivug;
 
-        if ((int)$mone['sivug']) {
-            $v_children = [];
-            foreach($mone['_children'] as $each)
-                if (count($each['_children'])) {
-                    foreach($each['_children'] as $each_c)
-                    array_push($v_children, $each_c);
+        foreach($mone['_children'] as &$each)
+            $this->bindProps($each);
+    }
+    public function getTree(&$mone, $sivug)
+    {
+        if ($mone['sivug'] == 1 && $sivug) {
+            if (count($mone['_children'])) {
+                $new_child = $mone['_children'];
+                foreach($mone['_children'] as $index => $each_child) {
+                    if ($each_child['sivug'] == 2) {
+                        unset($new_child[$index]);
+                        foreach($each_child['_children'] as $each_grandchild) {
+                            array_push($new_child, $each_grandchild);
+                        }
+                    }
                 }
-                $mone['_children'] = $v_children;
+                $new_child = array_combine(range(0, count($new_child)-1), $new_child);
+                $mone['_children'] = (array) $new_child;
+            }
         }
 
         if (count($mone['_children']))
             foreach($mone['_children'] as $each)
-                $this->getTree($each);
+                $this->getTree($each, $sivug);
     }
 
     public function getChartJSON(Request $request)

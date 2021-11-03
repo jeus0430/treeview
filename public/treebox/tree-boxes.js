@@ -45,7 +45,7 @@ function treeBoxes(urlService, jsonData)
 		width = window.innerWidth - margin.right - margin.left,
 		height = window.innerHeight - margin.top - margin.bottom;
     $("#tree-container").height(window.innerHeight - 80);
-	var rectNode = { width : 300, height : 70, textMargin : 5 },
+	var rectNode = { width : 400, height : 100, textMargin : 5 },
 		tooltip = { width : 150, height : 40, textMargin : 5 };
 	var i = 0,
 		duration = 750,
@@ -191,7 +191,18 @@ function treeBoxes(urlService, jsonData)
 		.attr('width', rectNode.width)
 		.attr('height', rectNode.height)
 		.attr('class', 'node-rect')
-		.attr('fill', function (d) {var color; if (d._children && d._children.length) color =  '#5cb85c'; else color = '#337ab7'; return color;})
+		.attr('fill', function (d) {
+			var color;
+			if (d.sivug == 1)
+				color = '#9081de';
+			else if (d.sivug == 2)
+				color = '#aaa';
+			else if (d._children && d._children.length)
+				color =  '#5cb85c';
+			else
+				color = '#337ab7';
+			return color;
+		})
 		.attr('filter', 'url(#drop-shadow)');
 		var no = nodeEnter.append('foreignObject')
 		.attr('x', rectNode.textMargin)
@@ -205,18 +216,16 @@ function treeBoxes(urlService, jsonData)
 							: (rectNode.height*1.3 - rectNode.textMargin * 2)
 				})
 		.append('xhtml').html(function(d) {
-					return '<div style="width: '
-                            + (rectNode.width*1.3 - rectNode.textMargin * 2) + 'px; height: '
-                            + (rectNode.height*1.3 - rectNode.textMargin * 2) + 'px;" class="node-text wordwrap"'
+					return '<div  class="node-text wordwrap"'
                             + 'onmousedown="beforeChart(event)"'
                             + 'onmouseup="openChart(event,\'' + d.mone + '\',\'' + d.address + '\')" data-mone="' + d.mone + '">'
 							+ '<b>Mone:</b>' + d.mone + '&nbsp;&nbsp;'
-							+ '<b>Address: </b>' + d.address + '<br>'
+							+ '<b>dif_sons: </b>' + d.dif_sons + '&nbsp;&nbsp;<br>'
 							+ '<b>qty: </b>' + d.qty + '&nbsp;&nbsp;'
 							+ '<b>real_qty: </b>' + d.real_qty  + '<br>'
 							+ '<b>delta: </b>' + d.delta + '&nbsp;&nbsp;'
 							+ '<b>per_cent: </b>' + d.per_cent + '<br>'
-							+ '<b>dif_sons: </b>' + d.dif_sons + '&nbsp;&nbsp;'
+							+ '<b>Address: </b>' + d.address
 							+ '</div>';
 				})
 		.on('mouseover', function(d) {

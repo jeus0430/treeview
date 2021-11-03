@@ -31,6 +31,10 @@
                             <input class="form-control" id="mone_av" name="mone_av" value="{{request()->mone_av}}">
                             <button style="align-self: center;margin-left: 20px;" type="submit" class="btn btn-primary">Search</button>
                         </div>
+                        <div class="form-group form-check" style="margin-left: 1em;">
+                            <input type="checkbox" class="form-check-input" name="sivug" id="sivug" @if (request()->sivug) checked @endif>
+                            <label class="form-check-label" for="sivug">Sivug</label>
+                        </div>
                     </fieldset>
                     <fieldset style="flex-grow: 2;margin-left: 20px;">
                         <legend>Graph:(For Graph press right click on Mone) </legend>
@@ -69,12 +73,7 @@
                                     <label class="form-check-label" for="together">3 Together</label>
                                 </div>
                             </div>
-                            <div>
-                                <div class="form-group form-check">
-                                    <input type="checkbox" class="form-check-input" id="sivug">
-                                    <label class="form-check-label" for="sivug">Sivug</label>
-                                </div>
-                            </div>
+
                             <div>
                                 <div class="row">
                                     <div class="col-md-6">
@@ -139,6 +138,7 @@
                 var chart_1, chart_2, chart_3, chart_4 ;
                 @isset($mones)
                     var data = JSON.parse(atob('<?= $mones ?>'));
+            console.log(data);
                     treeBoxes('',data);
                 @endisset
                 function generateDayWiseTimeSeries(arr, name) {
