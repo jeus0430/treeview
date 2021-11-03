@@ -23,33 +23,21 @@ class TreeController extends Controller
             $start_date     = $request->input('startDate', '2020-12-01');
             $end_date   = $request->input('endDate', '2020-12-31');
             if ($request->has('mone_av')) {
-                // Get parent mones with raw sql query from view table
-                // $sql = "
-                //     SELECT c.mone, b.address FROM
-                //     (SELECT mone_av FROM monim WHERE mone_av IS NOT NULL GROUP BY mone_av) AS a
-                //     LEFT JOIN monim c ON c.mone = a.mone_av
-                //     LEFT JOIN customers b ON b.neches = c.neches";
-                // $parents = DB::select($sql);
-
-                // Get total mone array with relavant info fields with raw sql query from moim table
-                $sql = "
-                    SELECT
-                    AVG(`kriot_yomi`.`qty`)            AS `qty`,
-                    AVG(`kriot_yomi`.`real_qty`)       AS `real_qty`,
-                    AVG(`kriot_yomi`.`delta`)          AS `delta`,
-                    AVG(`kriot_yomi`.`per_cent`)       AS `per_cent`,
-                    `monim`.`mone`                AS `mone`,
-                    `monim`.`neches`              AS `neches`,
-                    `monim`.`sivug` AS `sivug`,
-                    `customers`.`address`            AS `address`,
-                    `kriot_yomi`.`dif_sons`               AS `dif_sons`
-                    FROM  `monim`
-                    LEFT JOIN `kriot_yomi` ON `monim`.`mone` = `kriot_yomi`.`mone`
-                    LEFT JOIN `customers` ON `monim`.`neches` = `customers`.`neches`
-                    GROUP BY `monim`.`mone`, `monim`.`neches`, `customers`.`address`,`kriot_yomi`.`dif_sons`, `monim`.`sivug`
-                ";
+                $sql = "SELECT mone, SUM(qty) as qty, SUM(delta) as delta, SUM(real_qty) AS real_qty, SUM(per_cent) AS per_cent From kriot_yomi where DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}' GROUP BY mone";
                 $mone_arr       = DB::select($sql);
                 $this->mone_arr = array_combine(array_column($mone_arr, 'mone'), $mone_arr);
+
+                $sql = "SELECT * FROM kriot_yomi";
+                $mone_arr1 = DB::select($sql);
+                $this->mone_arr1 = array_combine(array_column($mone_arr1, 'mone'), $mone_arr1);
+
+                $sql = "SELECT * FROM monim";
+                $mone_arr2 = DB::select($sql);
+                $this->mone_arr2 = array_combine(array_column($mone_arr2, 'mone'), $mone_arr2);
+
+                $sql = "SELECT * FROM customers";
+                $customers = DB::select($sql);
+                $this->customers_arr = array_combine(array_column($customers, 'neches'), $customers);
                 // First get recursive tree model of mone nodes
                 $mone_av = $request->input('mone_av');
                 if ($mone_av)
@@ -77,14 +65,24 @@ class TreeController extends Controller
     }
 
     public function bindProps(&$mone) {
-        $result = $this->mone_arr[$mone['mone']];
-        $mone['qty']        = $result->qty;
-        $mone['address']    = $result->address;
-        $mone['real_qty']   = $result->real_qty;
-        $mone['per_cent']   = $result->per_cent;
-        $mone['delta']      = $result->delta;
-        $mone['dif_sons']   = $result->dif_sons;
-        $mone['sivug']      = (int)$result->sivug;
+        if (isset($this->mone_arr1[$mone['mone']])) {
+            $result = $this->mone_arr1[$mone['mone']];
+
+            if (isset($this->mone_arr2[$mone['mone']]))
+                $mone['neches']     = $this->mone_arr2[$mone['mone']]->neches;
+
+            if (isset($this->customers_arr[$mone['neches']])) {
+                $mone['address'] = $this->customers_arr[$mone['neches']]->address;
+            }
+        }
+
+        if (isset($this->mone_arr[$mone['mone']])) {
+            $result = $this->mone_arr[$mone['mone']];
+            $mone['qty'] = $result->qty;
+            $mone['real_qty'] = $result->real_qty;
+            $mone['per_cent'] = $result->per_cent;
+            $mone['delta'] = $result->delta;
+        }
 
         foreach($mone['_children'] as &$each)
             $this->bindProps($each);
@@ -119,8 +117,8 @@ class TreeController extends Controller
         $end_date = $request->input('end_date');
         $day_step = $request->input('day_step');
         if ($day_step == 'daily') {
-            $sql = "SELECT DATE(day_date) AS date, real_qty, qty, delta FROM view_yomi WHERE mone = '{$mone}' AND day_date > '{$start_date}' AND day_date < '{$end_date}' ORDER BY day_date";
-            $sql1 = "SELECT qty, reading_date FROM kriot_ratsif WHERE reading_date > '{$start_date}' AND reading_date < '{$end_date}' AND mone= {$mone} ORDER BY reading_date ASC ";
+            $sql = "SELECT DATE(day_date) AS date, real_qty, qty, delta FROM view_yomi WHERE mone = '{$mone}' AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}' ORDER BY day_date";
+            $sql1 = "SELECT qty, reading_date FROM kriot_ratsif WHERE DATE(reading_date) >= '{$start_date}' AND DATE(reading_date) <= '{$end_date}' AND mone= {$mone} ORDER BY reading_date ASC ";
             $result = DB::select($sql);
             $result1 = DB::select($sql1);
             $result = array (
@@ -130,76 +128,76 @@ class TreeController extends Controller
         } else if ($day_step == 'hourly') {
             $sql = "
                 SELECT REPLACE(day_date, '00:00:00','00:00:00') AS date, h00 AS qty FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','01:00:00'), h01 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','02:00:00'), h02 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','03:00:00'), h03 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','04:00:00'), h04 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','05:00:00'), h05 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','06:00:00'), h06 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','07:00:00'), h07 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','08:00:00'), h08 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','09:00:00'), h09 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','10:00:00'), h10 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','11:00:00'), h11 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','12:00:00'), h12 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','13:00:00'), h13 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','14:00:00'), h14 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','15:00:00'), h15 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','16:00:00'), h16 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','17:00:00'), h17 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','18:00:00'), h18 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','19:00:00'), h19 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','20:00:00'), h20 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','21:00:00'), h21 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','22:00:00'), h22 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 UNION
                 SELECT REPLACE(day_date, '00:00:00','23:00:00'), h23 FROM transmissions
-                WHERE mone = '{$mone}' AND total>0 AND day_date > '{$start_date}' AND day_date < '{$end_date}'
+                WHERE mone = '{$mone}' AND total>0 AND DATE(day_date) >= '{$start_date}' AND DATE(day_date) <= '{$end_date}'
                 ORDER BY date";
             $result = DB::select($sql);
         }

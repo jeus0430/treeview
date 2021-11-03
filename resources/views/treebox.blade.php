@@ -80,7 +80,7 @@
                                         <div class="form-group row">
                                             <label class="col-md-5 text-right" style="padding-right: 0;" for="exampleInputEmail1">End Date: </label>
                                             <div class="col-md-7">
-                                                <input id="endDate" class="form-control" value="<?= $end_date ?>" />
+                                                <input id="endDate" name="endDate" class="form-control" value="<?= $end_date ?>" />
                                             </div>
                                         </div>
                                     </div>
@@ -88,7 +88,7 @@
                                         <div class="form-group row">
                                             <label class="col-md-5 text-right" style="padding-right: 0;" for="exampleInputEmail1">Start Date: </label>
                                             <div class="col-md-7">
-                                                <input id="startDate" class="form-control" value="<?= $start_date ?>" />
+                                                <input id="startDate" name="startDate" class="form-control" value="<?= $start_date ?>" />
                                             </div>
                                         </div>
                                     </div>
@@ -267,6 +267,7 @@
                                                 xaxis: {
                                                     type: 'datetime',
                                                     labels: {
+                                                        datetimeUTC: false,
                                                         format: 'yyyy-MM-dd',
                                                         datetimeFormatter: {
                                                             year: 'yyyy',
@@ -306,6 +307,7 @@
                                                 xaxis: {
                                                     type: 'datetime',
                                                     labels: {
+                                                        datetimeUTC: false,
                                                         format: 'yyyy-MM-dd',
                                                         datetimeFormatter: {
                                                             year: 'yyyy',
@@ -345,6 +347,7 @@
                                                 xaxis: {
                                                     type: 'datetime',
                                                     labels: {
+                                                        datetimeUTC: false,
                                                         format: 'yyyy-MM-dd',
                                                         datetimeFormatter: {
                                                             year: 'yyyy',
@@ -384,6 +387,7 @@
                                                 xaxis: {
                                                     type: 'datetime',
                                                     labels: {
+                                                        datetimeUTC: false,
                                                         format: 'yyyy-MM-dd H',
                                                         datetimeFormatter: {
                                                             year: 'yyyy',
