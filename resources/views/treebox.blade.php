@@ -202,26 +202,43 @@
                                                 series: [
                                                     {
                                                         name: "qty",
-                                                        data: result.map(a => a.qty)
+                                                        data: result.org.map(a => a.qty)
                                                     },
                                                     {
                                                         name: "real_qty",
-                                                        data: result.map(a => a.real_qty)
+                                                        data: result.org.map(a => a.real_qty)
                                                     },
                                                     {
                                                         name: "delta",
-                                                        data: result.map(a => a.delta)
+                                                        data: result.org.map(a => a.delta)
                                                     }
                                                 ],
                                                 chart: {
+                                                    group: 'social',
+                                                    id: 'qty-real_qty-delta',
                                                     height: 350,
                                                     type: $('input[name="chart_type"]:checked').val(),
                                                     zoom: {
                                                         enabled: true
+                                                    },
+                                                    toolbar: {
+                                                        export: {
+                                                            csv : {
+                                                                filename: 'qty, real_qty, delta',
+                                                                datetimeUTC: false,
+                                                                dateFormatter(timestamp) {
+                                                                    var m = new Date(timestamp);
+                                                                    return m.getFullYear() + "/" +("0" + (m.getMonth()+1)).slice(-2) + "/" +("0" + m.getDate()).slice(-2)
+                                                                }
+                                                            }
+                                                        }
                                                     }
                                                 },
                                                 dataLabels: {
                                                     enabled: false
+                                                },
+                                                title: {
+                                                    text: 'qty, real_qty, delta'
                                                 },
                                                 stroke: {
                                                     curve: 'straight',
@@ -234,12 +251,72 @@
                                                     },
                                                 },
                                                 xaxis: {
-                                                    categories: result.map(a => a.date),
+                                                    type: 'datetime',
+                                                    labels: {
+                                                        datetimeUTC: false,
+                                                        format: 'yyyy-MM-dd',
+                                                        datetimeFormatter: {
+                                                            year: 'yyyy',
+                                                            month: 'MMM \'yy',
+                                                            day: 'dd MMM',
+                                                            hour: 'HH:mm'
+                                                        }
+                                                    },
+                                                    categories: result.org.map(a => a.date),
                                                 },
                                                 colors: [primary, success, danger]
                                             };
+                                            var options_4 = {
+                                                series: [{
+                                                    name: 'qty from kriot',
+                                                    data: generateQtys(result.new)
+                                                }],
+                                                stroke: {
+                                                    width: 1
+                                                },
+                                                title: {
+                                                    text: 'qty from kriot'
+                                                },
+                                                chart: {
+                                                    id: 'qty_kriot',
+                                                    group: 'social',
+                                                    type: $('input[name="chart_type"]:checked').val(),
+                                                    height: 200,
+                                                    zoom: {
+                                                        enabled: true
+                                                    },
+                                                    toolbar: {
+                                                        export: {
+                                                            csv : {
+                                                                filename: 'qty from kriot',
+                                                                datetimeUTC: false,
+                                                                dateFormatter(timestamp) {
+                                                                    var m = new Date(timestamp);
+                                                                    return m.getFullYear() + "/" +("0" + (m.getMonth()+1)).slice(-2) + "/" +("0" + m.getDate()).slice(-2) + " " +("0" + m.getHours()).slice(-2) + ":00:00"
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                },
+                                                colors: ['#000000'],
+                                                xaxis: {
+                                                    type: 'datetime',
+                                                    labels: {
+                                                        datetimeUTC: false,
+                                                        format: 'yyyy-MM-dd H',
+                                                        datetimeFormatter: {
+                                                            year: 'yyyy',
+                                                            month: 'MMM \'yy',
+                                                            day: 'dd MMM',
+                                                            hour: 'HH:mm'
+                                                        }
+                                                    }
+                                                },
+                                            };
                                             chart_1 = new ApexCharts(document.querySelector("#chart_1"), options);
                                             chart_1.render();
+                                            chart_4 = new ApexCharts(document.querySelector("#chart_4"), options_4);
+                                            chart_4.render();
                                         } else {
                                             var options_1 = {
                                                 series: [{
@@ -247,7 +324,7 @@
                                                     data: generateDayWiseTimeSeries(result.org, 'qty')
                                                 }],
                                                 chart: {
-                                                    id: 'fb',
+                                                    id: 'qty',
                                                     group: 'social',
                                                     type: $('input[name="chart_type"]:checked').val(),
                                                     height: 200
@@ -284,7 +361,7 @@
                                                     data: generateDayWiseTimeSeries(result.org, 'real_qty')
                                                 }],
                                                 chart: {
-                                                    id: 'fb',
+                                                    id: 'realqty',
                                                     toolbar: {
                                                         show: false
                                                     },
@@ -330,7 +407,7 @@
                                                     text: 'delta'
                                                 },
                                                 chart: {
-                                                    id: 'fb',
+                                                    id: 'delta',
                                                     toolbar: {
                                                         show: false
                                                     },
@@ -360,17 +437,17 @@
                                             };
                                             var options_4 = {
                                                 series: [{
-                                                    name: 'qty from kirot',
+                                                    name: 'qty from kriot',
                                                     data: generateQtys(result.new)
                                                 }],
                                                 stroke: {
                                                     width: 1
                                                 },
                                                 title: {
-                                                    text: 'qty from kirot'
+                                                    text: 'qty from kriot'
                                                 },
                                                 chart: {
-                                                    id: 'fb',
+                                                    id: 'qty_kriot',
                                                     toolbar: {
                                                         show: false
                                                     },
@@ -378,7 +455,7 @@
                                                     type: $('input[name="chart_type"]:checked').val(),
                                                     height: 200
                                                 },
-                                                colors: [info],
+                                                colors: ['#000000'],
                                                 yaxis: {
                                                     labels: {
                                                     minWidth: 40
