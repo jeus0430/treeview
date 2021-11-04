@@ -223,7 +223,7 @@ function treeBoxes(urlService, jsonData)
 							+ '<b>qty: </b>' + d.qty + '&nbsp;&nbsp;'
 							+ '<b>real_qty: </b>' + d.real_qty  + '<br>'
 							+ '<b>delta: </b>' + d.delta + '&nbsp;&nbsp;'
-							+ '<b>per_cent: </b>' + d.per_cent + '<br>'
+							+ '<b>per_cent: </b>' + (d.qty ? (d.delta/d.qty * 100).toFixed(2) : "0") + '<br>'
 							+ '<b>Address: </b>' + d.address
 							+ '</div>';
 				})
